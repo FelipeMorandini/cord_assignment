@@ -1,14 +1,10 @@
-from utils import calculate_breaks, time_to_minutes, format_time, find_stop_name_by_id, compare_times
+from src.utils import calculate_breaks, time_to_minutes, find_stop_name_by_id, compare_times
 
-"""
-Generate start and end times for each duty based on the given duties and vehicles.
 
-Parameters:
-- duties (list): A list of dictionaries representing each duty.
-- vehicles (list): A list of dictionaries representing each vehicle.
+"""Generates start and end times for each duty by looking at all vehicle events.
 
-Returns:
-- start_end_times (list): A list of dictionaries representing the start and end times for each duty.
+For each duty, finds the earliest start time and latest end time from events with a matching duty ID.
+Returns a list of dicts with duty ID, start time, and end time for each duty.
 """
 def generate_start_end_times(duties, vehicles):
     start_end_times = []
@@ -33,6 +29,11 @@ def generate_start_end_times(duties, vehicles):
         })
     return start_end_times
 
+"""Generates stop names for each duty by looking up the stop IDs.
+
+For each duty, finds the stop name corresponding to the first and last stop IDs.
+Returns the updated start/end times list with stop names added.
+"""
 def generate_stop_names(start_end_times, stops):
     for duty_data in start_end_times:
         first_stop_id = duty_data.get('First Stop ID')
@@ -45,19 +46,20 @@ def generate_stop_names(start_end_times, stops):
         duty_data['Last Stop'] = last_stop_name
     return start_end_times
 
+"""Generates break details for each duty.
+
+For each duty, finds the vehicle events matching the duty ID, sorts them, calculates the breaks between the events, and adds the break details to the duty data.
+
+Returns the updated start/end times list with break details added for each duty.
+"""
 def generate_breaks_info(start_end_with_stop_names, vehicles, stops):
-    """Calculates breaks info for each duty and adds it to the report."""
     for duty_data in start_end_with_stop_names:
         duty_id = duty_data['Duty ID']
-        # Filter vehicle events for the current duty
         vehicle_events = [
             event for vehicle in vehicles for event in vehicle['vehicle_events']
             if event.get('duty_id') == duty_id and 'start_time' in event and 'end_time' in event
         ]
-        # Sort events by start time
         vehicle_events_sorted = sorted(vehicle_events, key=lambda x: time_to_minutes(x['start_time']))
-        # Calculate breaks
         breaks = calculate_breaks(vehicle_events_sorted, stops)
-        # Add breaks info to duty data
         duty_data['Breaks'] = breaks
     return start_end_with_stop_names
