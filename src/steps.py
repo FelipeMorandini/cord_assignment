@@ -1,12 +1,20 @@
-# Import utility functions from utils.py
 from utils import calculate_breaks, time_to_minutes, format_time, find_stop_name_by_id, compare_times
 
-def generate_start_end_times(duties, vehicles, stops):
+"""
+Generate start and end times for each duty based on the given duties and vehicles.
+
+Parameters:
+- duties (list): A list of dictionaries representing each duty.
+- vehicles (list): A list of dictionaries representing each vehicle.
+
+Returns:
+- start_end_times (list): A list of dictionaries representing the start and end times for each duty.
+"""
+def generate_start_end_times(duties, vehicles):
     start_end_times = []
     for duty in duties:
         duty_id = duty['duty_id']
         earliest_start, latest_end = "23.59:59", "0.00:00"
-        first_stop_id, last_stop_id = None, None
 
         for vehicle in vehicles:
             for event in vehicle['vehicle_events']:
@@ -14,18 +22,14 @@ def generate_start_end_times(duties, vehicles, stops):
                     if 'start_time' in event:
                         if compare_times(event['start_time'], earliest_start) or earliest_start == "23.59:59":
                             earliest_start = event['start_time']
-                            first_stop_id = event.get('origin_stop_id')
                     if 'end_time' in event:
                         if compare_times(latest_end, event['end_time']) or latest_end == "0.00:00":
                             latest_end = event['end_time']
-                            last_stop_id = event.get('destination_stop_id')
 
         start_end_times.append({
             'Duty ID': duty_id,
             'Start Time': earliest_start if earliest_start != "23.59:59" else "No Start Time Found",
             'End Time': latest_end if latest_end != "0.00:00" else "No End Time Found",
-            'First Stop ID': first_stop_id,
-            'Last Stop ID': last_stop_id
         })
     return start_end_times
 

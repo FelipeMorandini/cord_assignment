@@ -59,7 +59,46 @@ def calculate_breaks(vehicle_events, stops):
             breaks.append(break_info)
     return breaks
 
-def export_to_excel(data, filename):
+def export_to_excel(data, filename, step):
     """Export report data to an Excel file."""
-    df = pd.DataFrame(data)
+    # Convert the data into a pandas DataFrame.
+    if step == 1:
+        columns = ['Duty ID', 'Start Time', 'End Time']
+        df = pd.DataFrame(data, columns=columns)
+    elif step == 2:
+        # Flatten the data structure if necessary and create a DataFrame.
+        df = pd.DataFrame(data)[['Duty ID', 'Start Time', 'End Time', 'First Stop', 'Last Stop']]
+        df = pd.DataFrame(data)
+    elif step == 3:
+        # For step 3, we will need to handle the nested 'Breaks' information.
+        # We will create a new row for each break.
+        rows = []
+        for duty in data:
+            for break_info in duty['Breaks']:
+                row = {
+                    'Duty ID': duty['Duty ID'],
+                    'Start Time': duty['Start Time'],
+                    'End Time': duty['End Time'],
+                    'First Stop': duty['First Stop'],
+                    'Last Stop': duty['Last Stop'],
+                    'Break Start Time': break_info['break_start_time'],
+                    'Break Duration': break_info['break_duration'],
+                    'Break Stop Name': break_info['break_stop_name']
+                }
+                rows.append(row)
+            if not duty['Breaks']:
+                # If there are no breaks, still add the duty info as a row.
+                rows.append({
+                    'Duty ID': duty['Duty ID'],
+                    'Start Time': duty['Start Time'],
+                    'End Time': duty['End Time'],
+                    'First Stop': duty['First Stop'],
+                    'Last Stop': duty['Last Stop'],
+                    'Break Start Time': None,
+                    'Break Duration': None,
+                    'Break Stop Name': None
+                })
+        df = pd.DataFrame(rows)
+    
+    # Write the DataFrame to an Excel file.
     df.to_excel(f"{filename}.xlsx", index=False)
